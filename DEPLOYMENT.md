@@ -43,7 +43,11 @@ The built files are in the **`dist`** folder (including `index.html`, assets, an
 2. Open the **document root** for tasknow.me (often `public_html` or a folder like `public_html/tasknow.me` — use the one Hostinger shows for this domain).
 3. Upload **all contents** of your local **`dist`** folder into that root (so `index.html` and `.htaccess` are in the root, not inside a `dist` subfolder).
 
-The **`public/.htaccess`** in this repo is copied into `dist` during build so that refreshing or opening direct links (e.g. `tasknow.me/map`) works correctly on Hostinger’s Apache.
+The **`public/.htaccess`** in this repo is copied into `dist` during build so that refreshing or opening direct links (e.g. `tasknow.me/customertasks`) works correctly on Hostinger’s Apache.
+
+**If you get 404 on routes like `/customertasks` or `/map`:**
+- Ensure **`.htaccess`** is really in **`public_html`** (same folder as `index.html`). The filename must start with a dot: **`.htaccess`** (some FTP clients hide or rename it to `htaccess` – rename it back to `.htaccess` on the server).
+- Re-upload the `.htaccess` from your project’s **`dist`** folder (or from **`public/.htaccess`**), then run `npm run build` again and upload the new `dist/.htaccess` to `public_html`.
 
 ### 4. SSL (HTTPS) on Hostinger
 

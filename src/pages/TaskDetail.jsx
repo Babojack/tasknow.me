@@ -603,7 +603,7 @@ export default function TaskDetailPage() {
                   )}
 
                   <div className="flex justify-between text-3xl font-black pt-2 border-t-2 border-black">
-                    <span>GESAMT:</span> {/* German translation */}
+                    <span>{t("total")}:</span>
                     <span>{finalPrice.toFixed(2)} EUR</span>
                   </div>
                 </div>

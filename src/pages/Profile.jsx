@@ -113,7 +113,7 @@ export default function ProfilePage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-4 md:mb-8">
           <h1 className="text-2xl md:text-4xl font-black text-black tracking-tighter">
-            PROFIL
+            {t("profile").toUpperCase()}
           </h1>
           {!isEditing ? (
             <Button
@@ -121,8 +121,8 @@ export default function ProfilePage() {
               className="bg-black text-white border-2 md:border-4 border-black hover:bg-white hover:text-black font-black text-sm md:text-base h-9 md:h-auto"
             >
               <Edit2 className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-              <span className="hidden md:inline">BEARBEITEN</span>
-              <span className="md:hidden">EDIT</span>
+              <span className="hidden md:inline">{t("edit").toUpperCase()}</span>
+              <span className="md:hidden">{t("edit").toUpperCase()}</span>
             </Button>
           ) : (
             <div className="flex gap-2">
@@ -132,7 +132,7 @@ export default function ProfilePage() {
                 className="border-2 border-black font-black text-sm md:text-base h-9 md:h-auto px-2 md:px-4"
               >
                 <X className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
-                <span className="hidden md:inline">ABBRECHEN</span>
+                <span className="hidden md:inline">{t("cancel").toUpperCase()}</span>
               </Button>
               <Button
                 onClick={handleSave}
@@ -144,7 +144,7 @@ export default function ProfilePage() {
                 ) : (
                   <>
                     <Save className="w-3 h-3 md:w-4 md:h-4 md:mr-2" />
-                    <span className="hidden md:inline">SPEICHERN</span>
+                    <span className="hidden md:inline">{t("save").toUpperCase()}</span>
                   </>
                 )}
               </Button>
@@ -192,7 +192,7 @@ export default function ProfilePage() {
                     {user.is_verified && (
                       <Badge className="bg-blue-600 text-white border-2 border-black text-xs">
                         <Shield className="w-3 h-3 mr-1" />
-                        VERIFIZIERT
+                        {t("verified").toUpperCase()}
                       </Badge>
                     )}
                     {user.user_type === "organization" && (
@@ -232,12 +232,12 @@ export default function ProfilePage() {
           <Card className="border-2 md:border-4 border-black bg-white mb-4 md:mb-6">
             <CardHeader className="p-3 md:p-4 border-b-2 border-black">
               <CardTitle className="font-black tracking-tighter text-lg md:text-xl">
-                PROFIL BEARBEITEN
+                {t("editProfile").toUpperCase()}
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4 md:p-6 space-y-3 md:space-y-4">
               <div className="space-y-2">
-                <Label className="font-black text-xs md:text-sm">TELEFON</Label>
+                <Label className="font-black text-xs md:text-sm">{t("phone").toUpperCase()}</Label>
                 <Input
                   value={editForm.phone}
                   onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
@@ -247,7 +247,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <Label className="font-black text-xs md:text-sm">STADT</Label>
+                <Label className="font-black text-xs md:text-sm">{t("city").toUpperCase()}</Label>
                 <Input
                   value={editForm.city}
                   onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
@@ -257,7 +257,7 @@ export default function ProfilePage() {
               </div>
 
               <div className="space-y-2">
-                <Label className="font-black text-xs md:text-sm">BIO</Label>
+                <Label className="font-black text-xs md:text-sm">{t("bio").toUpperCase()}</Label>
                 <Textarea
                   value={editForm.bio}
                   onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}

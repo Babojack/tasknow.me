@@ -1,15 +1,18 @@
-# SPA fallback for TaskNow (e.g. IONOS Apache)
-# When uploading build to IONOS, copy this file into the same folder as index.html (your document root).
+# SPA fallback for TaskNow – must be in same folder as index.html (e.g. public_html)
+# File MUST be named exactly .htaccess (with the dot). If missing, /customertasks etc. will 404.
 
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /
-  # Don't rewrite files or directories
+  # Serve existing files and directories
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
-  # Send everything else to index.html for client-side routing
-  RewriteRule ^ index.html [L]
+  # Send all other requests to index.html for React Router
+  RewriteRule ^ index.html [L,QSA]
 </IfModule>
+
+# Fallback if mod_rewrite is not available: use ErrorDocument (some hosts support this)
+ErrorDocument 404 /index.html
 
 # Optional: force HTTPS (uncomment if your host supports it)
 # <IfModule mod_rewrite.c>

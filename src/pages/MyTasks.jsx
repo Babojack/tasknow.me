@@ -118,7 +118,7 @@ export default function MyTasksPage() {
           <div className="border-2 md:border-4 border-black bg-white p-2 md:p-4">
             <div className="flex items-center gap-1 text-black mb-1">
               <CheckCircle className="w-3 h-3 md:w-5 md:h-5" />
-              <span className="text-[10px] md:text-xs font-black">GESAMT</span>
+              <span className="text-[10px] md:text-xs font-black">{t("total").toUpperCase()}</span>
             </div>
             <p className="text-xl md:text-4xl font-black">{stats.total}</p>
           </div>
@@ -126,7 +126,7 @@ export default function MyTasksPage() {
           <div className="border-2 md:border-4 border-black bg-white p-2 md:p-4">
             <div className="flex items-center gap-1 text-yellow-600 mb-1">
               <TrendingUp className="w-3 h-3 md:w-5 md:h-5" />
-              <span className="text-[10px] md:text-xs font-black">AKTIV</span>
+              <span className="text-[10px] md:text-xs font-black">{t("active").toUpperCase()}</span>
             </div>
             <p className="text-xl md:text-4xl font-black">{stats.active}</p>
           </div>
@@ -134,7 +134,7 @@ export default function MyTasksPage() {
           <div className="border-2 md:border-4 border-black bg-white p-2 md:p-4">
             <div className="flex items-center gap-1 text-green-600 mb-1">
               <CheckCircle className="w-3 h-3 md:w-5 md:h-5" />
-              <span className="text-[10px] md:text-xs font-black">ERLEDIGT</span>
+              <span className="text-[10px] md:text-xs font-black">{t("completed").toUpperCase()}</span>
             </div>
             <p className="text-xl md:text-4xl font-black">{stats.completed}</p>
           </div>
@@ -146,19 +146,19 @@ export default function MyTasksPage() {
               value="all"
               className="px-4 py-2 text-xs md:text-sm font-black border-2 border-black data-[state=active]:bg-black data-[state=active]:text-white data-[state=active]:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-none h-auto"
             >
-              ALLE ({allTasks.length})
+              {t("all").toUpperCase()} ({allTasks.length})
             </TabsTrigger>
             <TabsTrigger
               value="active"
               className="px-4 py-2 text-xs md:text-sm font-black border-y-2 border-black border-r-2 md:border-l-0 data-[state=active]:bg-black data-[state=active]:text-white data-[state=active]:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-none h-auto"
             >
-              AKTIV ({activeTasks.length})
+              {t("active").toUpperCase()} ({activeTasks.length})
             </TabsTrigger>
             <TabsTrigger
               value="completed"
               className="px-4 py-2 text-xs md:text-sm font-black border-2 border-black data-[state=active]:bg-black data-[state=active]:text-white data-[state=active]:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] rounded-none h-auto"
             >
-              ERLEDIGT ({completedTasks.length})
+              {t("completed").toUpperCase()} ({completedTasks.length})
             </TabsTrigger>
           </TabsList>
 
