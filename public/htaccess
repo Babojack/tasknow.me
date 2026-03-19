@@ -1,0 +1,22 @@
+# SPA fallback for TaskNow
+# On Hostinger: upload this file to public_html, then RENAME it to .htaccess (with the dot).
+# Same folder as index.html. Without .htaccess, routes like /customertasks will 404.
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  # Serve existing files and directories
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  # Send all other requests to index.html for React Router
+  RewriteRule ^ index.html [L,QSA]
+</IfModule>
+
+# Fallback if mod_rewrite is not available
+ErrorDocument 404 /index.html
+
+# Optional: force HTTPS (uncomment if your host supports it)
+# <IfModule mod_rewrite.c>
+#   RewriteCond %{HTTPS} off
+#   RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# </IfModule>

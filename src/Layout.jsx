@@ -2,7 +2,7 @@
 import React from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { Map, Zap, User, Plus, Briefcase, CheckSquare, MessageSquare, Menu, X, LogOut } from "lucide-react";
+import { Map, Zap, User, Plus, Briefcase, CheckSquare, MessageSquare, Menu, X, LogOut, Send } from "lucide-react";
 import { demoApi } from "@/api/demoClient";
 import { useQuery } from "@tanstack/react-query";
 import { TranslationProvider, useTranslation } from "@/components/i18n/TranslationContext";
@@ -219,6 +219,18 @@ function LayoutContent({ children, currentPageName }) {
           transform: translate(-4px, -4px) !important;
         }
       `}</style>
+
+      {/* Telegram button (top-right) */}
+      <a
+        href="https://t.me/afadante"
+        target="_blank"
+        rel="noreferrer"
+        className="fixed top-3 right-3 z-[120] w-10 h-10 rounded-full border-2 border-black bg-white hover:bg-black hover:text-white transition-all flex items-center justify-center"
+        aria-label="Telegram"
+        title="Telegram"
+      >
+        <Send className="w-5 h-5" />
+      </a>
 
       <header className="lg:hidden fixed top-0 left-0 right-0 z-[100] bg-white border-b-2 border-black">
         <div className="flex items-center justify-between gap-2 px-3 py-3 min-h-[56px]">
