@@ -7,6 +7,8 @@ import {
   Card,
   CardContent
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -26,8 +28,7 @@ import {
   Instagram,
   Linkedin,
   Euro,
-  Briefcase,
-  ClipboardList,
+  Loader2,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { TranslationProvider, useTranslation } from "@/components/i18n/TranslationContext";
@@ -37,11 +38,17 @@ function LandingContent() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { t } = useTranslation();
-  const { user, setUserType } = useAuth();
-  const [showRolePicker, setShowRolePicker] = React.useState(false);
+  const { user, login, register, loginWithGoogle } = useAuth();
+  const [showAuthDialog, setShowAuthDialog] = React.useState(false);
+  const [authMode, setAuthMode] = React.useState("login"); // "login" | "register"
+  const [authForm, setAuthForm] = React.useState({ email: "", password: "", fullName: "" });
+  const [authError, setAuthError] = React.useState(null);
+  const [authLoading, setAuthLoading] = React.useState(false);
 
-  const handleLogin = () => {
-    setShowRolePicker(true);
+  const handleLogin = (mode = "login") => {
+    setAuthMode(mode);
+    setAuthError(null);
+    setShowAuthDialog(true);
   };
 
   const handleGoToApp = () => {
@@ -54,18 +61,65 @@ function LandingContent() {
     }
   };
 
-  const handleContinueAsDoer = () => {
-    setUserType("executor");
+  const routeAfterAuth = (profile) => {
     queryClient.invalidateQueries({ queryKey: ["currentUser"] });
-    setShowRolePicker(false);
-    navigate(createPageUrl("Map"));
+    if (!profile?.onboarding_completed) {
+      navigate(createPageUrl("Onboarding"));
+      return;
+    }
+    if (profile.user_type === "executor") {
+      navigate(createPageUrl("Map"));
+    } else {
+      navigate(createPageUrl("CustomerTasks"));
+    }
   };
 
-  const handleContinueAsTasker = () => {
-    setUserType("customer");
-    queryClient.invalidateQueries({ queryKey: ["currentUser"] });
-    setShowRolePicker(false);
-    navigate(createPageUrl("CustomerTasks"));
+  const mapAuthError = (err) => {
+    const messages = {
+      "auth/email-already-in-use": "Diese E-Mail-Adresse wird bereits verwendet.",
+      "auth/invalid-email": "Ungültige E-Mail-Adresse.",
+      "auth/weak-password": "Das Passwort muss mindestens 6 Zeichen lang sein.",
+      "auth/user-not-found": "Kein Konto mit dieser E-Mail gefunden.",
+      "auth/wrong-password": "Falsches Passwort.",
+      "auth/invalid-credential": "E-Mail oder Passwort ist falsch.",
+      "auth/popup-closed-by-user": "Anmeldung abgebrochen.",
+      "auth/too-many-requests": "Zu viele Versuche. Bitte versuche es später erneut.",
+    };
+    return messages[err?.code] || "Etwas ist schiefgelaufen. Bitte versuche es erneut.";
+  };
+
+  const handleAuthSubmit = async (e) => {
+    e.preventDefault();
+    setAuthError(null);
+    setAuthLoading(true);
+    try {
+      const profile =
+        authMode === "login"
+          ? await login(authForm.email, authForm.password)
+          : await register(authForm.email, authForm.password, authForm.fullName);
+      setShowAuthDialog(false);
+      routeAfterAuth(profile);
+    } catch (err) {
+      console.error("Auth error:", err);
+      setAuthError(mapAuthError(err));
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleGoogleAuth = async () => {
+    setAuthError(null);
+    setAuthLoading(true);
+    try {
+      const profile = await loginWithGoogle();
+      setShowAuthDialog(false);
+      routeAfterAuth(profile);
+    } catch (err) {
+      console.error("Google auth error:", err);
+      setAuthError(mapAuthError(err));
+    } finally {
+      setAuthLoading(false);
+    }
   };
 
   const handleBlogClick = () => {
@@ -133,44 +187,116 @@ function LandingContent() {
 
   return (
     <div className="min-h-screen bg-white relative">
-      <Dialog open={showRolePicker} onOpenChange={setShowRolePicker}>
+      <Dialog open={showAuthDialog} onOpenChange={(open) => { setShowAuthDialog(open); if (!open) setAuthError(null); }}>
         <DialogContent className="sm:max-w-md border-2 md:border-4 border-black bg-white p-0 gap-0 overflow-hidden">
           <DialogHeader className="p-6 pb-2">
             <DialogTitle className="text-xl md:text-2xl font-black tracking-tighter text-center">
-              {t("chooseRole")}
+              {authMode === "login" ? t("login") : t("register")}
             </DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-6 pt-4">
-            <Card
-              className="border-2 md:border-4 border-black cursor-pointer hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all hover:border-[#E45826]"
-              onClick={handleContinueAsDoer}
-            >
-              <CardContent className="p-5 text-center">
-                <div className="w-12 h-12 md:w-14 md:h-14 bg-[#E45826] border-2 border-black mx-auto mb-3 flex items-center justify-center">
-                  <Briefcase className="w-6 h-6 md:w-7 md:h-7 text-white" />
+
+          <div className="px-6 pb-6 space-y-4">
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => { setAuthMode("login"); setAuthError(null); }}
+                className={`py-2 border-2 border-black font-black text-sm transition-all ${
+                  authMode === "login" ? "bg-black text-white" : "bg-white text-black hover:bg-gray-50"
+                }`}
+              >
+                {t("login").toUpperCase()}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setAuthMode("register"); setAuthError(null); }}
+                className={`py-2 border-2 border-black font-black text-sm transition-all ${
+                  authMode === "register" ? "bg-black text-white" : "bg-white text-black hover:bg-gray-50"
+                }`}
+              >
+                {t("register").toUpperCase()}
+              </button>
+            </div>
+
+            {authError && (
+              <div className="border-2 border-red-600 bg-red-50 p-3 text-sm font-bold text-red-700">
+                {authError}
+              </div>
+            )}
+
+            <form onSubmit={handleAuthSubmit} className="space-y-3">
+              {authMode === "register" && (
+                <div className="space-y-1">
+                  <Label className="text-xs font-black">Name</Label>
+                  <Input
+                    value={authForm.fullName}
+                    onChange={(e) => setAuthForm({ ...authForm, fullName: e.target.value })}
+                    placeholder="Max Mustermann"
+                    className="border-2 border-black"
+                  />
                 </div>
-                <h4 className="text-lg font-black mb-1">{t("roleDoer")}</h4>
-                <p className="text-sm text-gray-600 font-bold">{t("earnWithSkills")}</p>
-                <Button className="mt-3 w-full bg-black text-white border-2 border-black hover:bg-white hover:text-black font-black text-sm">
-                  {t("roleDoer")}
-                </Button>
-              </CardContent>
-            </Card>
-            <Card
-              className="border-2 md:border-4 border-black cursor-pointer hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] transition-all hover:border-[#E45826]"
-              onClick={handleContinueAsTasker}
+              )}
+              <div className="space-y-1">
+                <Label className="text-xs font-black">E-Mail</Label>
+                <Input
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={authForm.email}
+                  onChange={(e) => setAuthForm({ ...authForm, email: e.target.value })}
+                  placeholder="du@example.com"
+                  className="border-2 border-black"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs font-black">Passwort</Label>
+                <Input
+                  type="password"
+                  required
+                  minLength={6}
+                  autoComplete={authMode === "login" ? "current-password" : "new-password"}
+                  value={authForm.password}
+                  onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
+                  placeholder="••••••••"
+                  className="border-2 border-black"
+                />
+              </div>
+
+              <Button
+                type="submit"
+                disabled={authLoading}
+                className="w-full bg-black text-white border-2 border-black hover:bg-white hover:text-black font-black h-11"
+              >
+                {authLoading ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : authMode === "login" ? (
+                  t("login").toUpperCase()
+                ) : (
+                  t("register").toUpperCase()
+                )}
+              </Button>
+            </form>
+
+            <div className="flex items-center gap-3">
+              <div className="flex-1 h-px bg-black/20" />
+              <span className="text-xs font-bold text-gray-500">ODER</span>
+              <div className="flex-1 h-px bg-black/20" />
+            </div>
+
+            <Button
+              type="button"
+              onClick={handleGoogleAuth}
+              disabled={authLoading}
+              variant="outline"
+              className="w-full border-2 border-black font-black h-11 flex items-center justify-center gap-2 bg-white text-black hover:bg-gray-50"
             >
-              <CardContent className="p-5 text-center">
-                <div className="w-12 h-12 md:w-14 md:h-14 bg-[#E45826] border-2 border-black mx-auto mb-3 flex items-center justify-center">
-                  <ClipboardList className="w-6 h-6 md:w-7 md:h-7 text-white" />
-                </div>
-                <h4 className="text-lg font-black mb-1">{t("roleTasker")}</h4>
-                <p className="text-sm text-gray-600 font-bold">{t("tasksInMinutes")}</p>
-                <Button className="mt-3 w-full bg-black text-white border-2 border-black hover:bg-white hover:text-black font-black text-sm">
-                  {t("roleTasker")}
-                </Button>
-              </CardContent>
-            </Card>
+              <svg className="w-4 h-4" viewBox="0 0 48 48">
+                <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.6-6 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.6 6 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.4-.4-3.5z" />
+                <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.5 18.9 12 24 12c3.1 0 5.8 1.1 8 3l5.7-5.7C34.6 6 29.6 4 24 4c-7.4 0-13.7 4.1-17 10.1z" />
+                <path fill="#4CAF50" d="M24 44c5.5 0 10.4-1.9 14.2-5.1l-6.6-5.4c-2 1.5-4.6 2.5-7.6 2.5-5.3 0-9.7-3.4-11.3-8.1l-6.6 5.1C9.5 39.6 16.2 44 24 44z" />
+                <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4.1 5.5l6.6 5.4C41.4 35.6 44 30.2 44 24c0-1.2-.1-2.4-.4-3.5z" />
+              </svg>
+              Mit Google fortfahren
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -289,7 +415,7 @@ function LandingContent() {
 
             {user ? (
               <button
-                onClick={handleLogin}
+                onClick={handleGoToApp}
                 className="w-10 h-10 rounded-full border-2 border-black bg-white hover:bg-[#E45826] hover:border-[#E45826] transition-all flex items-center justify-center shrink-0 overflow-hidden"
                 title={user.full_name}
               >
@@ -358,7 +484,7 @@ function LandingContent() {
                 {t("login").toUpperCase()}
               </Button>
               <Button
-                onClick={handleLogin}
+                onClick={() => handleLogin("register")}
                 size="lg"
                 variant="outline"
                 className="h-12 md:h-16 px-6 md:px-10 text-base md:text-lg bg-white text-black border-2 md:border-4 border-black hover:bg-[#E45826] hover:text-white hover:border-[#E45826] font-black transition-all"
@@ -476,7 +602,7 @@ function LandingContent() {
                 </div>
               </div>
               <Button
-                onClick={handleLogin}
+                onClick={() => handleLogin("register")}
                 size="lg"
                 className="bg-[#E45826] text-white border-2 md:border-4 border-black hover:bg-white hover:text-black font-black h-12 md:h-14 px-6 md:px-8 text-sm md:text-base"
               >
@@ -531,7 +657,7 @@ function LandingContent() {
                 </div>
               </div>
               <Button
-                onClick={handleLogin}
+                onClick={() => handleLogin("register")}
                 size="lg"
                 className="bg-[#E45826] text-white border-2 md:border-4 border-black hover:bg-white hover:text-black font-black h-12 md:h-14 px-6 md:px-8 text-sm md:text-base"
               >
@@ -623,7 +749,7 @@ function LandingContent() {
             {t("joinThousands")}
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            <Card className="border-2 md:border-4 border-white hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] md:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] md:hover:translate-x-[-4px] md:hover:translate-y-[-4px]] transition-all cursor-pointer bg-white" onClick={handleLogin}>
+            <Card className="border-2 md:border-4 border-white hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] md:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] md:hover:translate-x-[-4px] md:hover:translate-y-[-4px]] transition-all cursor-pointer bg-white" onClick={() => handleLogin("register")}>
               <CardContent className="p-6 md:p-8 text-center">
                 <Users className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-3 md:mb-4 text-black" />
                 <h4 className="text-xl md:text-2xl font-black mb-2 text-black">{t("landingExecutor")}</h4>
@@ -634,7 +760,7 @@ function LandingContent() {
               </CardContent>
             </Card>
 
-            <Card className="border-2 md:border-4 border-white hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] md:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] md:hover:translate-x-[-4px] md:hover:translate-y-[-4px]] transition-all cursor-pointer bg-white" onClick={handleLogin}>
+            <Card className="border-2 md:border-4 border-white hover:shadow-[4px_4px_0px_0px_rgba(255,255,255,1)] md:hover:shadow-[8px_8px_0px_0px_rgba(255,255,255,1)] hover:translate-x-[-2px] hover:translate-y-[-2px] md:hover:translate-x-[-4px] md:hover:translate-y-[-4px]] transition-all cursor-pointer bg-white" onClick={() => handleLogin("register")}>
               <CardContent className="p-6 md:p-8 text-center">
                 <CheckCircle className="w-12 h-12 md:w-16 md:h-16 mx-auto mb-3 md:mb-4 text-black" />
                 <h4 className="text-xl md:text-2xl font-black mb-2 text-black">{t("landingCustomer")}</h4>

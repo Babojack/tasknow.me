@@ -1,0 +1,105 @@
+rules_version = '2';
+
+// TaskNow - Firestore security rules
+//
+// Paste this into Firebase Console -> Firestore Database -> Rules (or
+// deploy with `firebase deploy --only firestore:rules` if you use the
+// Firebase CLI). See FIREBASE_SETUP.md for the full setup walkthrough.
+//
+// Every query the app makes is equality-only (no orderBy sent to
+// Firestore - sorting happens client-side), so nothing here needs a
+// composite index.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // --- users ---------------------------------------------------------
+    // Any signed-in user can look up another user's profile (needed to
+    // show task owners, executors, reviewers, ...). Full collection
+    // scans are disabled - the app only ever fetches users by id.
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow list: if false;
+      allow create: if isSelf(userId);
+      // Users can edit their own profile; admins can update verification
+      // fields (is_verified, verification_status) on any profile.
+      allow update: if isSelf(userId) || isAdmin();
+      allow delete: if false;
+    }
+
+    // --- tasks -----------------------------------------------------------
+    match /tasks/{taskId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.owner_id == request.auth.uid;
+      // Owner can edit/cancel their task; the assigned executor can update
+      // it too (e.g. marking it in progress / completed).
+      allow update: if isSignedIn() &&
+        (resource.data.owner_id == request.auth.uid || resource.data.executor_id == request.auth.uid);
+      allow delete: if isSignedIn() && resource.data.owner_id == request.auth.uid;
+    }
+
+    // --- messages (task chat) --------------------------------------------
+    match /messages/{messageId} {
+      allow create: if isSignedIn() && request.resource.data.from_user_id == request.auth.uid;
+      allow read: if isSignedIn() &&
+        (resource.data.from_user_id == request.auth.uid || resource.data.to_user_id == request.auth.uid);
+      // Only the recipient can mark a message as read.
+      allow update: if isSignedIn() && resource.data.to_user_id == request.auth.uid;
+      allow delete: if false;
+    }
+
+    // --- task applications ------------------------------------------------
+    match /applications/{applicationId} {
+      allow create: if isSignedIn() && request.resource.data.executor_id == request.auth.uid;
+      allow read: if isSignedIn() &&
+        (resource.data.executor_id == request.auth.uid || resource.data.customer_id == request.auth.uid);
+      // Only the task's customer accepts/rejects applications.
+      allow update: if isSignedIn() && resource.data.customer_id == request.auth.uid;
+      allow delete: if false;
+    }
+
+    // --- blog -------------------------------------------------------------
+    match /blogPosts/{postId} {
+      allow read: if resource.data.status == 'published' || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    // --- task checklist items ----------------------------------------------
+    match /todoItems/{todoId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() &&
+        get(/databases/$(database)/documents/tasks/$(request.resource.data.task_id)).data.owner_id == request.auth.uid;
+      allow update, delete: if isSignedIn() &&
+        get(/databases/$(database)/documents/tasks/$(resource.data.task_id)).data.owner_id == request.auth.uid;
+    }
+
+    // --- reviews ------------------------------------------------------------
+    match /reviews/{reviewId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.from_user_id == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // --- identity verification requests ---------------------------------------
+    match /verificationRequests/{requestId} {
+      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
+      allow read: if isSignedIn() &&
+        (resource.data.user_id == request.auth.uid || isAdmin());
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+  }
+}

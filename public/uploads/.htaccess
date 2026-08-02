@@ -1,0 +1,14 @@
+# Uploaded files are user-controlled content - never let the web server
+# execute anything in here, no matter what extension ends up on disk.
+<FilesMatch "\.(php|php[0-9]?|phtml|pl|py|cgi|sh|exe|asp|aspx)$">
+  Order allow,deny
+  Deny from all
+</FilesMatch>
+
+# Belt and suspenders on hosts using mod_php.
+<IfModule mod_php.c>
+  php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+  php_flag engine off
+</IfModule>

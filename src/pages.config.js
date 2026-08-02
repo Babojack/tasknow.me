@@ -68,10 +68,6 @@ import OrganizationTasks from './pages/OrganizationTasks';
 import Profile from './pages/Profile';
 import TaskDetail from './pages/TaskDetail';
 import Verification from './pages/Verification';
-import adminblog from './pages/adminblog';
-import adminverification from './pages/adminverification';
-import blog from './pages/blog';
-import blogpost from './pages/blogpost';
 import __Layout from './Layout.jsx';
 
 
@@ -97,10 +93,15 @@ export const PAGES = {
     "Profile": Profile,
     "TaskDetail": TaskDetail,
     "Verification": Verification,
-    "adminblog": adminblog,
-    "adminverification": adminverification,
-    "blog": blog,
-    "blogpost": blogpost,
+    // Lowercase aliases (same components, different URL casing). These used
+    // to be separate `import x from './pages/adminblog'`-style imports that
+    // only resolved because macOS's default filesystem is case-insensitive
+    // - on a case-sensitive build (e.g. a Linux CI/build server) that fails
+    // outright since only AdminBlog.jsx etc. actually exist on disk.
+    "adminblog": AdminBlog,
+    "adminverification": AdminVerification,
+    "blog": Blog,
+    "blogpost": BlogPost,
 }
 
 export const pagesConfig = {

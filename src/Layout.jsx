@@ -13,7 +13,7 @@ function LayoutContent({ children, currentPageName }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { t, language } = useTranslation();
-  const { user, logout: authLogout } = useAuth();
+  const { user, logout: authLogout, isLoadingAuth } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   // ÖFFENTLICHE SEITEN - KEINE AUTH ERFORDERLICH
@@ -63,8 +63,12 @@ function LayoutContent({ children, currentPageName }) {
     }
   }, []);
 
-  // Redirect to landing when not logged in; redirect to onboarding when not completed
+  // Redirect to landing when not logged in; redirect to onboarding when not completed.
+  // Wait for Firebase Auth to finish restoring the session first, otherwise a
+  // page refresh on a private route would briefly see user=null and bounce a
+  // legitimately logged-in person back to the landing page.
   React.useEffect(() => {
+    if (isLoadingAuth) return;
     if (!user && !isPublicPage) {
       navigate("/", { replace: true });
       return;
@@ -74,7 +78,7 @@ function LayoutContent({ children, currentPageName }) {
         !isPublicPage) {
       navigate(createPageUrl("Onboarding"));
     }
-  }, [user, location.pathname, navigate, isPublicPage]);
+  }, [user, isLoadingAuth, location.pathname, navigate, isPublicPage]);
 
   const { data: unreadMessages = 0 } = useQuery({
     queryKey: ["unread-messages", user?.id],
@@ -171,7 +175,7 @@ function LayoutContent({ children, currentPageName }) {
     navigate("/", { replace: true });
   };
 
-  if (!user && !isPublicPage) {
+  if ((isLoadingAuth || !user) && !isPublicPage) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="animate-spin w-12 h-12 border-4 border-black border-t-transparent rounded-full" />

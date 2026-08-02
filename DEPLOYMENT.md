@@ -151,12 +151,14 @@ The output is in the **`dist`** folder.
 
 ## Environment variables for production
 
-If your app uses a backend API:
+The backend is Firebase (Auth + Firestore + Storage) - see
+**`FIREBASE_SETUP.md`** for the full setup walkthrough (enabling Auth
+providers, Firestore/Storage rules, getting your web app config, making a
+user admin).
 
 1. Copy `.env.example` to `.env`.
-2. Set `VITE_BACKEND_URL` to your real API (e.g. `https://api.tasknow.me` or your backend URL).
-3. For **Vercel/Netlify**, add `VITE_BACKEND_URL` in the project’s environment variables (and redeploy).
-4. For **IONOS**, you’d need to build locally with the correct `.env` and then upload the built `dist/` again (Vite bakes `VITE_*` into the build).
+2. Fill in the `VITE_FIREBASE_*` values from your Firebase project (Project settings → General → Your apps → Web app).
+3. Rebuild (`npm run build`) and re-upload `dist/` any time `.env` changes - Vite bakes `VITE_*` values into the build at build time, they are not read at runtime.
 
 ---
 
